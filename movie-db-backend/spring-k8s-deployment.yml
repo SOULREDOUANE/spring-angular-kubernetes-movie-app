@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springboot-deployment
+spec:
+  selector:
+    matchLabels:
+      app: springboot-k8s-postgres
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: springboot-k8s-postgres
+    spec:
+      containers:
+        - name: springboot
+          image: soulredouane/redouane-spring-image
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: host
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: dbName
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: password
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: springboot-svc
+spec:
+  selector:
+    app: springboot-k8s-postgres
+  ports:
+    - protocol: "TCP"
+      port: 8080
+      targetPort: 8080
+  type: NodePort
